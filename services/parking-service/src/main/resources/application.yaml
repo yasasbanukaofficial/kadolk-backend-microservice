@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: parking-service
+
+server:
+  port: 8081
