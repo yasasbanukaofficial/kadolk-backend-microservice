@@ -45,9 +45,10 @@ public class Parking {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    private void createdAt() {
+    private void defaultValues() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.status = ParkingStatus.AVAILABLE;
     }
 
     @PostPersist

@@ -1,6 +1,20 @@
 spring:
   application:
     name: parking-service
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
 
 server:
   port: 8081
+
+eureka:
+  client:
+    enabled: false
