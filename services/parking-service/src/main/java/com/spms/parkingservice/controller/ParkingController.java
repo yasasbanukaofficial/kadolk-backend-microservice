@@ -2,7 +2,9 @@ package com.spms.parkingservice.controller;
 
 import com.spms.parkingservice.dto.req.ParkingSaveReq;
 import com.spms.parkingservice.dto.req.ParkingUpdateReq;
-import com.spms.parkingservice.dto.res.ParkingRes;
+import com.spms.parkingservice.dto.res.ParkingDetailRes;
+import com.spms.parkingservice.dto.res.ParkingReservationRes;
+import com.spms.parkingservice.dto.res.ParkingSummaryRes;
 import com.spms.parkingservice.service.ParkingService;
 import com.spms.parkingservice.util.ApiResponse;
 import jakarta.validation.Valid;
@@ -21,7 +23,7 @@ public class ParkingController {
     private final ParkingService parkingService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ParkingRes>>> getAll() {
+    public ResponseEntity<ApiResponse<List<ParkingSummaryRes>>> getAll() {
         return ResponseEntity.status(HttpStatus.OK).body(
             new ApiResponse<>(
                 HttpStatus.OK.value(),
@@ -31,8 +33,30 @@ public class ParkingController {
         );
     }
 
+    @GetMapping("/available")
+    public ResponseEntity<ApiResponse<List<ParkingSummaryRes>>> getAvailableParking() {
+        return ResponseEntity.status(HttpStatus.OK).body(
+            new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "Retrieved Available Parking Details Successfully",
+                parkingService.getAvailableParking()
+            )
+        );
+    }
+
+    @GetMapping("/vehicle/{vehicleId}")
+    public ResponseEntity<ApiResponse<ParkingDetailRes>> getParkingByVehicleId(@PathVariable Long vehicleId) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+            new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "Retrieved Parking Details Successfully",
+                parkingService.getParkingByVehicleId(vehicleId)
+            )
+        );
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ParkingRes>> getById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ParkingDetailRes>> getById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(
             new ApiResponse<>(
                 HttpStatus.OK.value(),
@@ -43,7 +67,7 @@ public class ParkingController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ParkingRes>> save(@Valid @RequestBody ParkingSaveReq req) {
+    public ResponseEntity<ApiResponse<ParkingDetailRes>> save(@Valid @RequestBody ParkingSaveReq req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
             new ApiResponse<>(
                 HttpStatus.CREATED.value(),
@@ -54,12 +78,34 @@ public class ParkingController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ParkingRes>> update(@PathVariable Long id, @Valid @RequestBody ParkingUpdateReq req) {
+    public ResponseEntity<ApiResponse<ParkingDetailRes>> update(@PathVariable Long id, @Valid @RequestBody ParkingUpdateReq req) {
         return ResponseEntity.status(HttpStatus.OK).body(
             new ApiResponse<>(
                 HttpStatus.OK.value(),
                 "Parking Updated Successfully",
                 parkingService.update(id, req)
+            )
+        );
+    }
+
+    @PostMapping("/{parkingId}/reserve/{vehicleId}")
+    public ResponseEntity<ApiResponse<ParkingReservationRes>> reserveParking(@PathVariable Long vehicleId, @PathVariable Long parkingId) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+            new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "Parking Reserved Successfully",
+                parkingService.reserveParking(vehicleId, parkingId)
+            )
+        );
+    }
+
+    @PostMapping("/{vehicleId}/release")
+    public ResponseEntity<ApiResponse<ParkingReservationRes>> releaseParking(@PathVariable Long vehicleId) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+            new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "Parking Released Successfully",
+                parkingService.releaseParking(vehicleId)
             )
         );
     }
