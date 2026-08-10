@@ -1,16 +1,20 @@
 import './config/env';
 import app from './app';
 import { connectDB } from './config/db';
+import { loadRemoteConfig } from './config/remoteConfig';
 
-const port = Number(process.env.PORT ?? 8083);
+async function start(): Promise<void> {
+    await loadRemoteConfig();
 
-connectDB()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`user-service running on port ${port}`);
-        });
-    })
-    .catch((error) => {
-        console.error('Failed to start user-service', error);
-        process.exit(1);
+    const port = Number(process.env.PORT ?? 8083);
+
+    await connectDB();
+    app.listen(port, () => {
+        console.log(`user-service running on port ${port}`);
     });
+}
+
+start().catch((error) => {
+    console.error('Failed to start user-service', error);
+    process.exit(1);
+});
