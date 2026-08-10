@@ -21,6 +21,8 @@ public interface ParkingService {
 
     List<ParkingSummaryRes> getAvailableParking();
 
+    List<ParkingSummaryRes> getParkingByLocation(String location);
+
     ParkingDetailRes getParkingByVehicleId(Long vehicleId);
 
     ParkingReservationRes reserveParking(Long vehicleId, Long parkingId);

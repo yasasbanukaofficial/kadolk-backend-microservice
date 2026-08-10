@@ -44,6 +44,17 @@ public class ParkingController {
         );
     }
 
+    @GetMapping("/location/{location}")
+    public ResponseEntity<ApiResponse<List<ParkingSummaryRes>>> getByLocation(@PathVariable String location) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+            new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "Retrieved Parking Details by Location Successfully",
+                parkingService.getParkingByLocation(location)
+            )
+        );
+    }
+
     @GetMapping("/vehicle/{vehicleId}")
     public ResponseEntity<ApiResponse<ParkingDetailRes>> getParkingByVehicleId(@PathVariable Long vehicleId) {
         return ResponseEntity.status(HttpStatus.OK).body(
@@ -99,13 +110,13 @@ public class ParkingController {
         );
     }
 
-    @PostMapping("/{vehicleId}/release")
-    public ResponseEntity<ApiResponse<ParkingReservationRes>> releaseParking(@PathVariable Long vehicleId) {
+    @PostMapping("/{parkingId}/release")
+    public ResponseEntity<ApiResponse<ParkingReservationRes>> releaseParking(@PathVariable Long parkingId) {
         return ResponseEntity.status(HttpStatus.OK).body(
             new ApiResponse<>(
                 HttpStatus.OK.value(),
                 "Parking Released Successfully",
-                parkingService.releaseParking(vehicleId)
+                parkingService.releaseParking(parkingId)
             )
         );
     }

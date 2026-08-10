@@ -47,15 +47,14 @@ public class ParkingServiceImpl implements ParkingService {
     @Override
     public ParkingDetailRes update(Long id, ParkingUpdateReq req) {
         Parking parking = parkingRepo.findById(id).orElseThrow(() -> new ParkingNotFoundException("Parking not found with id: " + id));
-        if (parkingRepo.findById(parking.getId()).isPresent()) {
-            parking.setCity(req.getCity());
-            parking.setZone(req.getZone());
-            parking.setLocation(req.getLocation());
-            parking.setStatus(req.getStatus());
-            return modelMapper.map(parkingRepo.save(parking), ParkingDetailRes.class);
-        } else {
-            throw new ParkingNotAvailable("Parking is not available, Please try again!");
-        }
+        parking.setCity(req.getCity());
+        parking.setZone(req.getZone());
+        parking.setLocation(req.getLocation());
+        parking.setAddress(req.getAddress());
+        parking.setLat(req.getLat());
+        parking.setLng(req.getLng());
+        parking.setStatus(req.getStatus());
+        return modelMapper.map(parkingRepo.save(parking), ParkingDetailRes.class);
     }
 
     @Override
@@ -72,8 +71,17 @@ public class ParkingServiceImpl implements ParkingService {
     }
 
     @Override
+    public List<ParkingSummaryRes> getParkingByLocation(String location) {
+        return parkingRepo.getAllByLocationContainingIgnoreCase(location).stream()
+            .map(parking -> modelMapper.map(parking, ParkingSummaryRes.class))
+            .toList();
+    }
+
+    @Override
     public ParkingDetailRes getParkingByVehicleId(Long vehicleId) {
-        return modelMapper.map(parkingRepo.getParkingByVehicleId(vehicleId), ParkingDetailRes.class);
+        Parking parking = parkingRepo.getParkingByVehicleId(vehicleId)
+            .orElseThrow(() -> new ParkingNotFoundException("Parking not found for vehicle id: " + vehicleId));
+        return modelMapper.map(parking, ParkingDetailRes.class);
     }
 
     @Transactional
@@ -94,9 +102,13 @@ public class ParkingServiceImpl implements ParkingService {
         return modelMapper.map(parkingRepo.save(parking), ParkingReservationRes.class);
     }
 
+    @Transactional
     @Override
     public ParkingReservationRes releaseParking(Long parkingId) {
-        Parking parking = parkingRepo.findById(parkingId).orElseThrow(() -> new ParkingNotFoundException("Parking not found with id: " + parkingId));
+        Parking parking = parkingRepo.findByIdForUpdate(parkingId).orElseThrow(() -> new ParkingNotFoundException("Parking not found with id: " + parkingId));
+        if (parking.getStatus() != ParkingStatus.OCCUPIED) {
+            throw new ParkingNotAvailable("Parking is not currently occupied, nothing to release");
+        }
         parking.setVehicleId(null);
         parking.setStatus(ParkingStatus.AVAILABLE);
         return modelMapper.map(parkingRepo.save(parking), ParkingReservationRes.class);

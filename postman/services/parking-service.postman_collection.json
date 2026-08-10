@@ -144,18 +144,18 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/parking/:vehicleId/release",
+              "raw": "{{baseUrl}}/parking/:parkingId/release",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "parking",
-                ":vehicleId",
+                ":parkingId",
                 "release"
               ],
               "variable": [
                 {
-                  "key": "vehicleId",
+                  "key": "parkingId",
                   "value": "1",
                   "description": "Parking id"
                 }
