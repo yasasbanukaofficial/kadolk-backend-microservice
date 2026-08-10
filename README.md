@@ -5,13 +5,16 @@ A cloud-native, microservice-based application for real-time management and moni
 ## Table of Contents
 
 - [Architecture](#architecture)
+- [Authentication](#authentication)
 - [Tech Stack](#tech-stack)
 - [Services](#services)
+  - [api-gateway](#api-gateway)
   - [parking-service](#parking-service)
   - [vehicle-service](#vehicle-service)
   - [user-service](#user-service)
   - [payment-service](#payment-service)
-- [Service-to-Service Communication (Planned)](#service-to-service-communication-planned)
+- [Infrastructure](#infrastructure)
+- [Service-to-Service Communication](#service-to-service-communication)
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
 - [Resources](#resources)
@@ -20,36 +23,67 @@ A cloud-native, microservice-based application for real-time management and moni
 
 ## Architecture
 
-Microservice architecture. Each service is independently deployable, owns its own database, and exposes a JSON REST API behind a consistent `ApiResponse` envelope. Spring Cloud Eureka is used as the service registry & discovery so services can locate each other by name (e.g. `parking-service`, `vehicle-service`) instead of hard-coded addresses, which enables the service-to-service communication described below.
+Microservice architecture. Every request enters through the **API Gateway** (`:8080`), which authenticates the caller with a JWT and then load-balances the call to the owning service. Each service is independently deployable, owns its own database, and exposes a JSON REST API behind a consistent `ApiResponse` envelope. Spring Cloud Eureka (`:8761`) is the service registry & discovery, so services locate each other by name (e.g. `lb://parking-service`) instead of hard-coded addresses. All configuration is centralized in a Spring Cloud Config Server (`:8888`) that serves the YAML files from the `config-repo` folder.
 
+```mermaid
+flowchart LR
+    Client[Client / Frontend] -->|Bearer JWT| Gateway[API Gateway<br/>:8080]
+
+    subgraph Infrastructure
+        Config[Config Server<br/>:8888]
+        Eureka[Eureka Registry<br/>:8761]
+    end
+
+    Gateway -->|lb://parking-service| Parking[parking-service<br/>:8081]
+    Gateway -->|lb://vehicle-service| Vehicle[vehicle-service<br/>:8082]
+    Gateway -->|direct URL| User[user-service<br/>:8083]
+    Gateway -->|lb://payment-service| Payment[payment-service<br/>:8084]
+
+    Parking --> PG1[(PostgreSQL<br/>parking)]
+    Vehicle --> PG2[(PostgreSQL<br/>vehicle)]
+    Payment --> PG3[(PostgreSQL<br/>payment)]
+    User --> Mongo[(MongoDB<br/>user)]
+
+    Parking -.validate vehicle.-> Vehicle
+    Parking -.validate vehicle.-> User
+    Vehicle -.validate user.-> User
+    Payment -.validate booking.-> Parking
+    Payment -.validate user.-> User
+    User -.validate parking.-> Parking
+    User -.validate vehicle.-> Vehicle
+
+    Parking -.register.-> Eureka
+    Vehicle -.register.-> Eureka
+    Payment -.register.-> Eureka
+    Gateway -.register.-> Eureka
+
+    Config -.serves config-repo yamls.-> Gateway
+    Config -.serves config-repo yamls.-> Parking
+    Config -.serves config-repo yamls.-> Vehicle
+    Config -.serves config-repo yamls.-> Payment
+    Config -.serves config-repo yamls.-> User
 ```
-                         ┌────────────────────┐
-                         │   API Gateway       │   (planned - Spring Cloud Gateway)
-                         │   localhost:8080    │
-                         └──────────┬─────────┘
-                                    │
-              ┌─────────────────────┼─────────────────────┐
-              │                     │                     │
-    ┌─────────▼─────────┐ ┌────────▼──────────┐ ┌────────▼─────────┐
-    │   parking-service │ │   vehicle-service │ │   user-service  │
-    │   (Spring Boot)   │ │   (Spring Boot)   │ │ (Node/Express)  │
-    │      :8081        │ │      :8082        │ │      :8083      │
-    └─────────┬─────────┘ └────────┬──────────┘ └────────┬─────────┘
-              │                    │                     │
-              │           ┌───────▼───────┐              │
-              └──────────▶│ payment-service│◀────────────┘
-                          │  (Spring Boot) │
-                          │     :8084      │
-                          └───────┬───────┘
-                                  │
-                    ┌─────────────┼─────────────┐
-                    │             │             │
-                PostgreSQL     PostgreSQL     MongoDB
-                (parking)    (vehicle+payment) (user)
 
-                      ┌───────────────────────────┐
-                      │   Eureka Registry :8761    │  (infra - not yet in repo)
-                      └───────────────────────────┘
+## Authentication
+
+All routes behind the gateway (except `/api/auth/**`) require a valid JWT. The user-service (Node) is the source of truth for credentials (bcrypt-hashed passwords); the gateway is the token issuer (jjwt). The gateway forwards the login request to user-service to verify the credentials, then signs its **own** JWT that the client must send as `Authorization: Bearer <token>` on every subsequent call.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as API Gateway
+    participant U as user-service
+
+    C->>G: POST /api/auth/login { email, password }
+    G->>U: POST /user/login { email, password }
+    U-->>G: 200 { token, user: { _id, email, role, ... } }
+    G-->>C: 200 { token: <gateway JWT>, userId, email, role }
+
+    Note over C,G: Subsequent requests
+    C->>G: GET /api/parking (Authorization: Bearer <JWT>)
+    G->>G: JwtAuthFilter validates signature & expiry
+    G->>G: 401 Unauthorized (JSON) if missing/invalid
+    G->>Parking: forwarded only when JWT is valid
 ```
 
 ## Tech Stack
@@ -57,15 +91,18 @@ Microservice architecture. Each service is independently deployable, owns its ow
 | Layer | Choice |
 | --- | --- |
 | Java services | Java 21, Spring Boot 4.1.0, Spring Data JPA (Hibernate 7), Bean Validation, ModelMapper, Spring Cloud Eureka Client |
+| API Gateway | Spring Cloud Gateway (MVC), Spring Security, **jjwt** (API + impl + jackson) for JWT signing/validation, Spring Cloud LoadBalancer |
 | Node service | Node.js, TypeScript, Express 5, Mongoose (MongoDB), Zod (validation), JWT + bcryptjs (auth) |
 | Databases | PostgreSQL (parking-service, vehicle-service, payment-service), MongoDB (user-service) |
-| Communication (planned) | Service-to-service via **Spring WebFlux `WebClient`** in Java services and **axios** in the Node service |
+| Infrastructure | Eureka Registry, Spring Cloud Config Server (git backend), Docker |
+| Communication | Service-to-service via **Spring WebFlux `WebClient`** in Java services and **axios** in the Node service |
 | Tooling | Maven wrapper per Java service, `npm`/`tsx` for the Node service, Postman collections |
 
 ## Services
 
 | Service | Stack | Port | Description |
 | --- | --- | --- | --- |
+| `infastructure/api-gateway` | Spring Cloud Gateway (MVC) | 8080 | Single entry point. JWT login (`/api/auth/login`), validates JWTs on every other route, load-balances to services via Eureka. |
 | `services/parking-service` | Spring Boot + PostgreSQL | 8081 | Manages parking spaces: list, manage, reserve, release, update status, and filter by location/availability. |
 | `services/vehicle-service` | Spring Boot + PostgreSQL | 8082 | Handles vehicle operations: register, update, retrieve vehicle details, link vehicles to users, and simulate entry/exit tracking. |
 | `services/user-service` | Node.js (Express) + MongoDB | 8083 | Handles user operations: register/authenticate (JWT), view/update profiles, and access booking history/logs. |
@@ -80,6 +117,30 @@ All responses use a consistent envelope:
   "data": { }
 }
 ```
+
+---
+
+### api-gateway
+
+The single entry point of the whole system. It owns no data of its own — it authenticates callers and forwards traffic.
+
+**Endpoints**
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/api/auth/login` | Public. Verifies `{ email, password }` against user-service and returns a gateway-issued JWT. |
+| GET/POST/PUT/DELETE | `/api/parking/**` | Proxied to `parking-service` (load-balanced via Eureka). |
+| GET/POST/PUT/DELETE | `/api/vehicle/**` | Proxied to `vehicle-service` (load-balanced via Eureka). |
+| GET/POST/PUT/DELETE | `/api/payment/**` | Proxied to `payment-service` (load-balanced via Eureka). |
+| GET/POST/PUT/DELETE | `/api/user/**` | Proxied to `user-service` (direct URL — Node service is not in Eureka). |
+
+Every proxied route strips the `/api` prefix (`StripPrefix=1`), so `/api/parking/1` becomes `/parking/1` downstream.
+
+**Notable behavior**
+
+- **Authentication** (`POST /api/auth/login`): the gateway forwards the credentials to `user-service` (`POST /user/login`) via a `WebClient`; on success it signs its **own** JWT (jjwt) containing `subject = userId`, plus `email` and `role` claims, expiring after 24h (`jwt.expiration-ms`).
+- **Authorization**: every request except `/api/auth/**` and `/actuator/**` must carry `Authorization: Bearer <JWT>`. The `JwtAuthFilter` validates signature + expiry and populates the Spring Security context. Missing/invalid tokens get a `401` JSON response.
+- **Load balancing**: routes to Java services use `lb://<service-name>` URIs and are resolved through Eureka (Spring Cloud LoadBalancer makes round-robin between instances trivial to scale). The Node service is reached by direct URL `user-service.url`.
 
 ---
 
@@ -104,9 +165,9 @@ Responsible for parking spaces and reservations. A parking spot has a `city`, `z
 
 **Notable business rules**
 
-- Reservation flow (`reserveParking`): a vehicle cannot reserve a second spot (`VehicleAlreadyReservedException`), and a spot must be `AVAILABLE` (`ParkingNotAvailable`). The spot row is locked with a **pessimistic lock** (`findByIdForUpdate`) so two concurrent reservations cannot both succeed.
+- Reservation flow (`reserveParking`): first **validates the `vehicleId` against vehicle-service** (`VehicleServiceClient` via `lb://vehicle-service`), then enforces that the vehicle is not already parked (`VehicleAlreadyReservedException`) and the spot is `AVAILABLE` (`ParkingNotAvailable`). The spot row is locked with a **pessimistic lock** (`findByIdForUpdate`) so two concurrent reservations cannot both succeed.
 - Release flow (`releaseParking`): only `OCCUPIED` spots can be released; the vehicle link is cleared and status returns to `AVAILABLE`.
-- The `vehicleId` on a reservation is currently accepted as-is — validating it against `vehicle-service` is the next step (see [Service-to-Service Communication](#service-to-service-communication-planned)).
+- If vehicle-service is unreachable the reservation fails with `503 Service Unavailable` — bookings never assume a vehicle exists.
 
 ---
 
@@ -131,8 +192,9 @@ Responsible for vehicle registration and lifecycle. A vehicle belongs to a `user
 **Notable business rules**
 
 - `vehicleNumber` must be unique (`VehicleNumberAlreadyExistsException`).
+- When registering a vehicle with a `userId`, the service **validates that user exists** via user-service (`UserServiceClient`, direct URL `user-service.url`).
 - Entry/exit are guarded: a vehicle already `INSIDE` cannot enter again (`VehicleAlreadyInsideException`), and a vehicle that is not inside cannot exit (`VehicleNotInsideException`).
-- This is the service other services will call to **validate that a `vehicleId` exists** and to fetch vehicle details.
+- Exposes `GET /vehicle/{id}` — the endpoint other services call to validate a `vehicleId`.
 
 ---
 
@@ -156,8 +218,9 @@ The only Node.js service. Handles users and their booking history using Express 
 **Notable business rules**
 
 - Input is validated with **Zod** schemas before reaching the service layer.
-- Booking history is stored on the user document; currently it is a simple log. Enriching it with real data from `parking-service` / `payment-service` is part of the cross-service work.
-- Uses `axios` for outbound HTTP calls to other services (e.g. to validate/fetch data) — see below.
+- `POST /user/:id/bookings` **validates the `parkingId` and `vehicleId` with parking-service and vehicle-service** (axios) before appending to the booking history — invalid references get `404`, unreachable services get `503`.
+- Booking history is stored on the user document as a simple `{ parkingId, vehicleId, action, timestamp }` log.
+- `POST /user/login` is the endpoint the API Gateway calls to verify credentials; the response includes the user's own (Node-issued) JWT plus the full user object.
 
 ---
 
@@ -182,32 +245,35 @@ Responsible for the mock payment flow. A payment references a `bookingId` and `u
 
 **Notable business rules**
 
+- `POST /payment` first **validates the `bookingId` with parking-service** (`ParkingServiceClient` via `lb://parking-service`) and the **`userId` with user-service** (direct URL) — non-existent references are rejected with `404`.
 - Card validation is mocked: the card number must pass the **Luhn algorithm** and the expiry must not be in the past.
-- Only the **last 4 digits** of the card are persisted; the card is never stored or returned.
-- `POST /payment/{id}/pay` simulates a payment gateway:
-  - card ending in `0000` → `FAILED`
-  - otherwise → `PAID`, with a receipt number and `paidAt`
+- Only the **last 4 digits** of the card are persisted (e.g. `4242`); the card is never stored or returned.
+- `POST /payment/{id}/pay` simulates a payment gateway: card ending in `0000` → `FAILED`, otherwise → `PAID` with a receipt number and `paidAt`.
 - A `PAID` payment cannot be paid again (`PaymentAlreadyPaidException`); only `PAID` payments can be refunded (`PaymentNotRefundableException`); receipts are only available for processed payments (`PaymentNotProcessedException`).
 - `pay`/`refund` lock the row with a pessimistic lock to prevent double-processing under concurrency.
 
 ---
 
-## Service-to-Service Communication (Planned)
+## Infrastructure
 
-Right now every service is self-contained: `parking-service` accepts any `vehicleId`, `payment-service` accepts any `bookingId`/`userId`, and there is no verification that referenced records actually exist in the owning service. The plan is to add real inter-service calls:
-
-| Caller | Calls | Purpose |
+| Module | Port | Description |
 | --- | --- | --- |
-| `parking-service` | `vehicle-service` | Validate that a `vehicleId` exists before reserving; fetch vehicle details |
-| `payment-service` | `parking-service` | Validate that a `bookingId` exists before creating a payment |
-| `payment-service` | `user-service` | Validate that a `userId` exists |
-| `vehicle-service` | `user-service` | Validate that a `userId` exists when registering a vehicle |
-| `user-service` | `parking-service` / `payment-service` | Enrich booking history with real reservation/payment data |
+| `infastructure/eureka-server` | 8761 | Service registry. Every Java service (and the gateway) registers here; `lb://` routes and clients resolve instances through it. |
+| `infastructure/config-server` | 8888 | Serves configuration from the `config-repo` folder (git backend). Every service imports `optional:configserver:http://localhost:8888` and reads its `{service-name}.yaml` from here. |
+| `config-repo` | - | YAML files per service: ports, `spring.datasource.url` (`${DB_URL}` from each service's `.env`), Eureka settings, and (for the gateway) routes + JWT settings. |
 
-**How it will be implemented**
+## Service-to-Service Communication
 
-- **Java services** (parking, vehicle, payment) will use **Spring WebFlux `WebClient`** — a non-blocking HTTP client — to call sibling services. Since Spring Cloud Eureka is configured, calls will go through the service registry (load-balanced), but a direct URL fallback keeps local development working.
-- **Node service** (user) will use **axios** for its outbound calls.
+Every service now validates the cross-service references it consumes. Java services use **Spring WebFlux `WebClient`** (non-blocking, with a blocking call at the service boundary); the Node service uses **axios**. Calls to Java services go through **Eureka** (`lb://`), calls to the Node service use a **direct URL** because it is not registered with Eureka.
+
+| Caller | Callee | Call | Failure behavior |
+| --- | --- | --- | --- |
+| `parking-service` | `vehicle-service` | Validate `vehicleId` on reserve | `404 Vehicle not found` / `503` if unreachable |
+| `vehicle-service` | `user-service` | Validate `userId` on register | `404 User not found` / `503` if unreachable |
+| `payment-service` | `parking-service` | Validate `bookingId` on payment create | `404 Booking not found` / `503` if unreachable |
+| `payment-service` | `user-service` | Validate `userId` on payment create | `404 User not found` / `503` if unreachable |
+| `user-service` | `parking-service` / `vehicle-service` | Validate `parkingId`/`vehicleId` on booking log | `404` / `503` if unreachable |
+| `api-gateway` | `user-service` | Verify credentials on login | `401 Invalid email or password` / `503` if unreachable |
 
 ---
 
@@ -218,9 +284,11 @@ Right now every service is self-contained: `parking-service` accepts any `vehicl
 - JDK 21+
 - Node.js 18+
 - PostgreSQL and MongoDB (or hosted equivalents, e.g. Neon / Atlas)
-- A running Eureka server on `localhost:8761` (infrastructure module is planned — services will still boot without it but will not register/discover)
+- Docker (optional, for containers)
 
 ### Configure & run
+
+Start the infrastructure first, then the gateway, then the services.
 
 Each service reads a `.env` file (values are imported via `spring.config.import: optional:file:.env[.properties]` in Java services, and `dotenv` in the Node service). Create a `.env` in each service folder with at least the database URL:
 
@@ -229,32 +297,50 @@ Each service reads a `.env` file (values are imported via `spring.config.import:
 DB_URL=jdbc:postgresql://localhost:5432/parking_db
 ```
 
-Then run each service from its own directory:
-
 ```bash
-# Java services
-./mvnw spring-boot:run
+# 1. Infrastructure (each from its own directory)
+cd infastructure/eureka-server && ./mvnw spring-boot:run     # :8761
+cd infastructure/config-server && ./mvnw spring-boot:run     # :8888
+cd infastructure/api-gateway  && ./mvnw spring-boot:run      # :8080
 
-# Node service
-npm install
-npm run dev
+# 2. Services
+cd services/parking-service  && ./mvnw spring-boot:run       # :8081
+cd services/vehicle-service  && ./mvnw spring-boot:run       # :8082
+cd services/payment-service  && ./mvnw spring-boot:run       # :8084
+
+# 3. Node service
+cd services/user-service && npm install && npm run dev       # :8083
 ```
 
-Services listen on: parking `8081`, vehicle `8082`, user `8083`, payment `8084`.
+### Authentication flow (quick test)
+
+```bash
+# 1. Get a token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"secret"}'
+
+# 2. Call a protected route with the token
+curl http://localhost:8080/api/parking \
+  -H "Authorization: Bearer <token>"
+```
 
 ## Project Structure
 
 ```
-├── infastructure/               # Eureka / gateway / config-server (planned)
-├── config-server/               # centralized config (planned)
-├── docs/                        # coursework PDF, screenshots
+├── config-repo/                  # YAML configuration per service (served by config-server)
+├── infastructure/
+│   ├── api-gateway/              # Spring Cloud Gateway (MVC), JWT auth, :8080
+│   ├── config-server/            # centralized configuration server, :8888
+│   └── eureka-server/            # service registry, :8761
+├── docs/                         # coursework PDF, screenshots
 ├── postman/
-│   └── services/                # Postman collections per service
+│   └── services/                 # Postman collections per service
 └── services/
-    ├── parking-service/         # Spring Boot, PostgreSQL, :8081
-    ├── vehicle-service/         # Spring Boot, PostgreSQL, :8082
-    ├── user-service/            # Node.js/Express + MongoDB, :8083
-    └── payment-service/         # Spring Boot, PostgreSQL, :8084
+    ├── parking-service/          # Spring Boot, PostgreSQL, :8081
+    ├── vehicle-service/          # Spring Boot, PostgreSQL, :8082
+    ├── user-service/             # Node.js/Express + MongoDB, :8083
+    └── payment-service/          # Spring Boot, PostgreSQL, :8084
 ```
 
 ## Resources
