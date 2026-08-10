@@ -1,0 +1,334 @@
+{
+  "info": {
+    "name": "parking-service",
+    "description": "Parking Service API collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Parking",
+      "item": [
+        {
+          "name": "Get All Parking",
+          "id": "887b31e3-c6a1-4173-ba75-41123a40dbd4",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Available Parking",
+          "id": "57eed29a-baf5-4c5f-af21-b6738e460081",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/available",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                "available"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Parking By Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/location/:location",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                "location",
+                ":location"
+              ],
+              "variable": [
+                {
+                  "key": "location",
+                  "value": "Colombo"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Parking By Vehicle Id",
+          "id": "75d61d43-339b-459b-a1dc-393c8ced0bae",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/vehicle/:vehicleId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                "vehicle",
+                ":vehicleId"
+              ],
+              "variable": [
+                {
+                  "key": "vehicleId",
+                  "value": "1",
+                  "description": "Vehicle id"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reserve Parking",
+          "id": "adaf7de5-a1f6-4295-b914-e4b0060885c0",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/:parkingId/reserve/:vehicleId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                ":parkingId",
+                "reserve",
+                ":vehicleId"
+              ],
+              "variable": [
+                {
+                  "key": "parkingId",
+                  "value": "1",
+                  "description": "Parking id"
+                },
+                {
+                  "key": "vehicleId",
+                  "value": "1",
+                  "description": "Vehicle id"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Release Parking",
+          "id": "e9a809e4-025d-4cdb-ae39-ac24998c06f2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/:parkingId/release",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                ":parkingId",
+                "release"
+              ],
+              "variable": [
+                {
+                  "key": "parkingId",
+                  "value": "1",
+                  "description": "Parking id"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Parking By Id",
+          "id": "45eff390-9d46-487b-be56-05c6001ba0fa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Parking id"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save Parking",
+          "id": "eb4324ec-06c1-4d5f-af7f-4608bd516642",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Colombo\",\n  \"zone\": \"Zone 1\",\n  \"location\": \"Main Street Parking Lot\",\n  \"address\": \"123 Galle Road, Colombo 03\",\n  \"lat\": \"6.9271\",\n  \"lng\": \"79.8612\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parking",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Parking",
+          "id": "7d55f873-ae2b-49a3-bd37-30fe98698c83",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Colombo\",\n  \"zone\": \"Zone 1\",\n  \"location\": \"Main Street Parking Lot\",\n  \"address\": \"123 Galle Road, Colombo 03\",\n  \"lat\": \"6.9271\",\n  \"lng\": \"79.8612\",\n  \"status\": \"AVAILABLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parking/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Parking id"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Parking",
+          "id": "32791f2b-fe5e-4509-91a4-83fecf10c195",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Parking id"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
