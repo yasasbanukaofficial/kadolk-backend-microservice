@@ -3,6 +3,7 @@ import { IBookingLog, User, UserDoc } from '../models/user.model';
 import { DuplicateUserError, InvalidCredentialsError, UserNotFoundError } from '../errors/custom.errors';
 import { signToken } from '../utils/jwt';
 import { BookingLogInput, CreateUserInput, UpdateUserInput } from '../schemas/user.schemas';
+import { validateParkingExists, validateVehicleExists } from './serviceClients';
 
 const toUserRes = (user: UserDoc): Record<string, unknown> => {
     const { password, ...rest } = user.toObject();
@@ -90,6 +91,8 @@ export const userService = {
         if (!user) {
             throw new UserNotFoundError('User not found with id: ' + id);
         }
+        await validateParkingExists(data.parkingId);
+        await validateVehicleExists(data.vehicleId);
         user.bookingHistory.push({ ...data, timestamp: new Date() });
         await user.save();
         return user.bookingHistory.map((log) => toBookingLog(log));
