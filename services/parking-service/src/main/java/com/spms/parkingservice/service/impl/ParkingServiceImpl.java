@@ -1,5 +1,6 @@
 package com.spms.parkingservice.service.impl;
 
+import com.spms.parkingservice.client.VehicleServiceClient;
 import com.spms.parkingservice.dto.req.ParkingSaveReq;
 import com.spms.parkingservice.dto.req.ParkingUpdateReq;
 import com.spms.parkingservice.dto.res.ParkingDetailRes;
@@ -24,6 +25,7 @@ import java.util.List;
 public class ParkingServiceImpl implements ParkingService {
     private final ParkingRepo parkingRepo;
     private final ModelMapper modelMapper;
+    private final VehicleServiceClient vehicleServiceClient;
 
     @Override
     public List<ParkingSummaryRes> getAll() {
@@ -87,6 +89,8 @@ public class ParkingServiceImpl implements ParkingService {
     @Transactional
     @Override
     public ParkingReservationRes reserveParking(Long vehicleId, Long parkingId) {
+        vehicleServiceClient.validateVehicleExists(vehicleId);
+
         boolean isVehicleReserved = parkingRepo.existsByVehicleId(vehicleId);
         if (isVehicleReserved) {
             throw new VehicleAlreadyReservedException("Vehicle is already reserved");
