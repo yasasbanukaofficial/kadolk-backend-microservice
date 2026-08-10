@@ -24,3 +24,21 @@ export class InvalidCredentialsError extends Error {
         this.name = 'InvalidCredentialsError';
     }
 }
+
+export class SiblingNotFoundError extends Error {
+    statusCode = 404;
+
+    constructor(message: string) {
+        super(message);
+        this.name = 'SiblingNotFoundError';
+    }
+}
+
+export class SiblingServiceUnavailableError extends Error {
+    statusCode = 503;
+
+    constructor(message: string) {
+        super(message);
+        this.name = 'SiblingServiceUnavailableError';
+    }
+}

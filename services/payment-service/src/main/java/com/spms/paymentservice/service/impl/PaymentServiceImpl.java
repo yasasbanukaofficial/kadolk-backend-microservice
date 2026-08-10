@@ -1,5 +1,7 @@
 package com.spms.paymentservice.service.impl;
 
+import com.spms.paymentservice.client.ParkingServiceClient;
+import com.spms.paymentservice.client.UserServiceClient;
 import com.spms.paymentservice.dto.req.PaymentSaveReq;
 import com.spms.paymentservice.dto.req.PaymentUpdateReq;
 import com.spms.paymentservice.dto.res.PaymentDetailRes;
@@ -29,6 +31,8 @@ import java.util.UUID;
 public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepo paymentRepo;
     private final ModelMapper modelMapper;
+    private final ParkingServiceClient parkingServiceClient;
+    private final UserServiceClient userServiceClient;
 
     @Override
     public List<PaymentSummaryRes> getAll() {
@@ -59,6 +63,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDetailRes save(PaymentSaveReq req) {
+        parkingServiceClient.validateBookingExists(req.getBookingId());
+        userServiceClient.validateUserExists(req.getUserId());
         validateMockCard(req);
         Payment payment = new Payment();
         payment.setBookingId(req.getBookingId());

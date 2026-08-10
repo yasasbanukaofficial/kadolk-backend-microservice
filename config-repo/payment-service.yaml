@@ -1,0 +1,20 @@
+server:
+  port: 8084
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+eureka:
+  client:
+    enabled: true
+
+user-service:
+  url: http://localhost:8083

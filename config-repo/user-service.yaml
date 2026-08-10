@@ -1,0 +1,4 @@
+PORT: 8083
+MONGO_URI: mongodb://localhost:27017/user-service
+PARKING_SERVICE_URL: http://localhost:8081
+VEHICLE_SERVICE_URL: http://localhost:8082
