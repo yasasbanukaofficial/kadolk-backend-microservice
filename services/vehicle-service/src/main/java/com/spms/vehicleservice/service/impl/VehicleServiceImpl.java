@@ -1,5 +1,6 @@
 package com.spms.vehicleservice.service.impl;
 
+import com.spms.vehicleservice.client.UserServiceClient;
 import com.spms.vehicleservice.dto.req.VehicleSaveReq;
 import com.spms.vehicleservice.dto.req.VehicleUpdateReq;
 import com.spms.vehicleservice.dto.res.VehicleDetailRes;
@@ -26,6 +27,7 @@ import java.util.List;
 public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepo vehicleRepo;
     private final ModelMapper modelMapper;
+    private final UserServiceClient userServiceClient;
 
     @Override
     public List<VehicleSummaryRes> getAll() {
@@ -56,6 +58,9 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleDetailRes save(VehicleSaveReq req) {
+        if (req.getUserId() != null) {
+            userServiceClient.validateUserExists(req.getUserId());
+        }
         if (vehicleRepo.existsByVehicleNumber(req.getVehicleNumber())) {
             throw new VehicleNumberAlreadyExistsException("Vehicle number already exists: " + req.getVehicleNumber());
         }
