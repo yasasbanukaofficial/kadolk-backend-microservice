@@ -1,0 +1,186 @@
+{
+  "info": {
+    "name": "user-service",
+    "description": "User Service API collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"0771234567\",\n  \"password\": \"secret123\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Smith\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"0771234567\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Booking History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/:id/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":id", "bookings"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add User Booking Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parkingId\": \"1\",\n  \"vehicleId\": \"2\",\n  \"action\": \"RESERVED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/:id/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":id", "bookings"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
