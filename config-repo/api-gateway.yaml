@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      # All routes require a valid JWT - only /api/auth/** (handled by the gateway itself) is public
+      routes:
+        - id: parking-service
+          uri: lb://parking-service
+          predicates:
+            - Path=/api/parking/**
+          filters:
+            - StripPrefix=1
+
+        - id: vehicle-service
+          uri: lb://vehicle-service
+          predicates:
+            - Path=/api/vehicle/**
+          filters:
+            - StripPrefix=1
+
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payment/**
+          filters:
+            - StripPrefix=1
+
+        # user-service (Node) is not registered with Eureka, so it is reached by direct URL
+        - id: user-service
+          uri: ${user-service.url:http://localhost:8083}
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=1
+
+jwt:
+  secret: ${JWT_SECRET:spms-gateway-jwt-secret-change-me-in-production-0123456789}
+  expiration-ms: 86400000
+
+user-service:
+  url: http://localhost:8083
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ['health', 'prometheus', 'info', 'metrics', 'env']
+
+  endpoint:
+    health:
+      show-details: always
