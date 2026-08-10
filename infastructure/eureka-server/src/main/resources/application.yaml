@@ -1,29 +1,6 @@
 spring:
   application:
     name: eureka-server
-
-server:
-  port: 8761
-
-eureka:
-  client:
-    # Server should not register itself as a service - It doesn't need to call itself
-    register-with-eureka: false
-
-    # Prevents fetching its own service list
-    # Eureka server doesn't need the registry as it contains the registry
-    # No need to download its own registry
-    # Only other services need to download the registry as those services need to know where other registry runs
-    fetch-registry: false
-
-management:
-  server:
-    port: 8761
-  endpoints:
-    web:
-      exposure:
-        include: ['health', 'prometheus', 'info', 'metrics', 'env']
-
-  endpoint:
-    health:
-      show-details: always
+  config:
+    import:
+      - optional:configserver:http://localhost:8888
