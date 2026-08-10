@@ -56,4 +56,9 @@ public class Parking {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @PreUpdate
+    private void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
 }

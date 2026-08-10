@@ -7,6 +7,9 @@ import lombok.*;
 @Data @Builder
 public class ParkingSaveReq {
 
+    @Positive(message = "Owner id must be a positive number")
+    private Long ownerId;
+
     @NotBlank(message = "City is required")
     @Size(min = 2, max = 100, message = "City must be between 2 and 100 characters")
     @Pattern(regexp = "^[A-Za-z][A-Za-z\\s.'-]*$", message = "City must contain only letters, spaces, dots, apostrophes and hyphens")

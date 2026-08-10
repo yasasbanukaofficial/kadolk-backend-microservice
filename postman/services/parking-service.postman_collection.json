@@ -63,6 +63,36 @@
           "response": []
         },
         {
+          "name": "Get Parking By Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parking/location/:location",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking",
+                "location",
+                ":location"
+              ],
+              "variable": [
+                {
+                  "key": "location",
+                  "value": "Colombo"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get Parking By Vehicle Id",
           "id": "75d61d43-339b-459b-a1dc-393c8ced0bae",
           "request": {
