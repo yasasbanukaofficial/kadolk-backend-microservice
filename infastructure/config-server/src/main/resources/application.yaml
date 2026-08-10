@@ -1,3 +1,18 @@
 spring:
   application:
     name: config-server
+
+  profiles:
+    # Reads yaml files from a git repository (config-repo folder) 
+    active: git
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/yasasbanukaofficial/kadolk-backend-microservice
+          search-paths: config-repo
+          default-label: main
+
+server:
+  port: 8888
