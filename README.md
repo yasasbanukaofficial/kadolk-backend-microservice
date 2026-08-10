@@ -12,6 +12,7 @@ Microservice architecture built primarily with Spring Boot, Spring Cloud Eureka 
 | --- | --- |
 | `services/parking-service` | Manages parking spaces: list, manage, reserve, release, update status, and filter by location/availability. |
 | `services/vehicle-service` | Handles vehicle operations: register, update, retrieve vehicle details, link vehicles to users, and simulate entry/exit tracking. |
+| `services/user-service` | Handles user operations: register/authenticate, view/update profiles, and access booking history/logs. |
 
 ## Getting Started
 
@@ -25,4 +26,5 @@ Each service is a Spring Boot application. Configure the environment variables (
 
 - [Parking Service Postman Collection](./postman/services/parking-service.postman_collection.json)
 - [Vehicle Service Postman Collection](./postman/services/vehicle-service.postman_collection.json)
+- [User Service Postman Collection](./postman/services/user-service.postman_collection.json)
 - ![Eureka Dashboard](./docs/screenshots/eureka_dashboard.png)
