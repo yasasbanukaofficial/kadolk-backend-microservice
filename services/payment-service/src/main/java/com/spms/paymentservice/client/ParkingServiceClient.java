@@ -13,14 +13,14 @@ public class ParkingServiceClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    public void validateBookingExists(Long bookingId) {
+    public void validateParkingExists(Long parkingId) {
         try {
             webClientBuilder.build()
                 .get()
-                .uri("http://parking-service/parking/{id}", bookingId)
+                .uri("lb://parking-service/parking/{id}", parkingId)
                 .retrieve()
                 .onStatus(status -> status.value() == 404,
-                    response -> Mono.error(new BookingNotFoundException("Booking not found with id: " + bookingId)))
+                    response -> Mono.error(new BookingNotFoundException("Booking not found with id: " + parkingId)))
                 .onStatus(status -> status.isError(),
                     response -> Mono.error(new ServiceUnavailableException("Parking service returned an unexpected status")))
                 .bodyToMono(Void.class)

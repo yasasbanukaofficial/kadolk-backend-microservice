@@ -6,10 +6,10 @@ const vehicleServiceUrl = process.env.VEHICLE_SERVICE_URL ?? 'http://localhost:8
 
 const assertResourceExists = async (url: string, notFoundMessage: string): Promise<void> => {
     try {
-        await axios.get(url);
+        await axios.get(url, { timeout: 5000 });
     } catch (error) {
         const status = (error as AxiosError).response?.status;
-        if (status !== undefined && status >= 400 && status < 500) {
+        if (status === 404) {
             throw new SiblingNotFoundError(notFoundMessage);
         }
         throw new SiblingServiceUnavailableError('Dependent service is currently unavailable');
