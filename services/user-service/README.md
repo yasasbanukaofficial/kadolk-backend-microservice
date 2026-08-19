@@ -6,15 +6,15 @@ The only **Node.js (TypeScript/Express)** service in the system. It owns the **u
 
 ```mermaid
 flowchart LR
-    Gateway[API Gateway :8080] -->|direct URL| User[user-service :8083]
+    Gateway[API Gateway :8002] -->|direct URL| User[user-service :8005]
     User --> Mongo[(MongoDB)]
-    Vehicle[vehicle-service :8082] -.validate userId.-> User
-    Payment[payment-service :8084] -.validate userId.-> User
-    User -.validate parkingId.-> Parking[parking-service :8081]
+    Vehicle[vehicle-service :8004] -.validate userId.-> User
+    Payment[payment-service :8006] -.validate userId.-> User
+    User -.validate parkingId.-> Parking[parking-service :8003]
     User -.validate vehicleId.-> Vehicle
 ```
 
-- Receives its main traffic via the gateway (`/api/user/**` → `/user/**`), but is reached by **direct URL** (the gateway, vehicle-service and payment-service call `http://localhost:8083` directly) because it never registers with Eureka.
+- Receives its main traffic via the gateway (`/api/user/**` → `/user/**`), but is reached by **direct URL** (the gateway, vehicle-service and payment-service call `http://localhost:8005` directly) because it never registers with Eureka.
 - **Is consumed by** vehicle-service (vehicle registration validates the `userId`), payment-service (payment creation validates the `userId`) and the API Gateway (`/user/login` when issuing JWTs).
 - **Consumes** parking-service and vehicle-service to validate the ids recorded in a user's booking history.
 
@@ -67,10 +67,10 @@ services/user-service/
 
 **`config/remoteConfig.ts`** — the Node counterpart of Spring's config-server import. On boot, `index.ts` awaits it before anything else:
 
-- GETs `http://localhost:8888/user-service/default` (the config server).
+- GETs `http://localhost:8001/user-service/default` (the config server).
 - For every key found (e.g. `PORT`, `MONGO_URI`, `PARKING_SERVICE_URL`, `VEHICLE_SERVICE_URL`) it sets `process.env[key]` **only if not already set** — local `.env`/shell environment always wins.
 
-**`index.ts`** — `async start()`: `await loadRemoteConfig()` → read `PORT` (default 8083) → `await connectDB(MONGO_URI)` → `app.listen`. This ordering guarantees the service never boots with default ports/databases when a config server is available.
+**`index.ts`** — `async start()`: `await loadRemoteConfig()` → read `PORT` (default 8005) → `await connectDB(MONGO_URI)` → `app.listen`. This ordering guarantees the service never boots with default ports/databases when a config server is available.
 
 **`models/user.model.ts`** — two schemas:
 
@@ -99,7 +99,7 @@ services/user-service/
 - `getBookings` — returns the booking log array.
 - `addBooking` — the cross-service bit: `validateParkingExists(data.parkingId)` and `validateVehicleExists(data.vehicleId)` run **before** the log is pushed, so booking history never references ids that don't exist.
 
-**`services/serviceClients.ts`** — axios with a shared `assertResourceExists` helper: GETs the resource URL; a 4xx response → `SiblingNotFoundError` (404); any other failure (5xx, connection refused, timeout) → `SiblingServiceUnavailableError` (503). Base URLs come from env (`PARKING_SERVICE_URL` / `VEHICLE_SERVICE_URL`, defaults `http://localhost:8081` / `:8082`) — delivered by the config server.
+**`services/serviceClients.ts`** — axios with a shared `assertResourceExists` helper: GETs the resource URL; a 4xx response → `SiblingNotFoundError` (404); any other failure (5xx, connection refused, timeout) → `SiblingServiceUnavailableError` (503). Base URLs come from env (`PARKING_SERVICE_URL` / `VEHICLE_SERVICE_URL`, defaults `http://localhost:8003` / `:8004`) — delivered by the config server.
 
 **`utils/jwt.ts`** — `signToken(userId)` → Node JWT with `{ userId }` claim, 1 day expiry, secret from `JWT_SECRET` (default `your-jwt-secret`). *Note: this is the token user-service itself issues. The API Gateway does not validate it — the gateway verifies credentials here and then issues its own jjwt token.*
 
@@ -125,23 +125,23 @@ All under `/user`, wrapped in the `{ statusCode, message, data }` envelope:
 `src/config/remoteConfig.ts` pulls `config-repo/user-service.yaml` at boot:
 
 ```yaml
-PORT: 8083
+PORT: 8005
 MONGO_URI: mongodb://localhost:27017/user-service
-PARKING_SERVICE_URL: http://localhost:8081   # for booking-history validation
-VEHICLE_SERVICE_URL: http://localhost:8082   # for booking-history validation
+PARKING_SERVICE_URL: http://localhost:8003   # for booking-history validation
+VEHICLE_SERVICE_URL: http://localhost:8004   # for booking-history validation
 ```
 
-Local `.env` values always win over the remote config. Runtime dependencies: config server (`:8888`), MongoDB, and parking/vehicle-service for `addBooking` validation.
+Local `.env` values always win over the remote config. Runtime dependencies: config server (`:8001`), MongoDB, and parking/vehicle-service for `addBooking` validation.
 
 ## How to run
 
 ```bash
 cd services/user-service
 npm install
-npm run dev          # tsx watch, :8083
+npm run dev          # tsx watch, :8005
 npm run typecheck    # tsc --noEmit
 # or production build:
 npm run build && npm start
 ```
 
-Docker: `docker build -t spms/user-service . && docker run -p 8083:8083 spms/user-service`.
+Docker: `docker build -t spms/user-service . && docker run -p 8005:8005 spms/user-service`.

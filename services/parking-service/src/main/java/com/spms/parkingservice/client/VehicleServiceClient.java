@@ -17,7 +17,7 @@ public class VehicleServiceClient {
         try {
             webClientBuilder.build()
                 .get()
-                .uri("http://vehicle-service/vehicle/{id}", vehicleId)
+                .uri("lb://vehicle-service/vehicle/{id}", vehicleId)
                 .retrieve()
                 .onStatus(status -> status.value() == 404,
                     response -> Mono.error(new VehicleNotFoundException("Vehicle not found with id: " + vehicleId)))

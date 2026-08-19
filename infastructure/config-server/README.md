@@ -7,12 +7,12 @@ The **centralized configuration service** (Spring Cloud Config). It serves every
 ```mermaid
 flowchart LR
     Git[(config-repo<br/>github.com/yasasbanukaofficial/<br/>kadolk-backend-microservice<br/>main branch)]
-    Config[Config Server :8888]
-    Gateway[api-gateway :8080]
-    Parking[parking-service :8081]
-    Vehicle[vehicle-service :8082]
-    Payment[payment-service :8084]
-    User[user-service :8083]
+    Config[Config Server :8001]
+    Gateway[api-gateway :8002]
+    Parking[parking-service :8003]
+    Vehicle[vehicle-service :8004]
+    Payment[payment-service :8006]
+    User[user-service :8005]
 
     Config -->|clones config-repo| Git
     Gateway -->|GET /api-gateway/default| Config
@@ -22,7 +22,7 @@ flowchart LR
     User -->|GET /user-service/default| Config
 ```
 
-Every service imports `optional:configserver:http://localhost:8888` — *optional*, so a service still boots (with defaults) when the config server is down.
+Every service imports `optional:configserver:http://localhost:8001` — *optional*, so a service still boots (with defaults) when the config server is down.
 
 ## Project structure
 
@@ -57,7 +57,7 @@ spring:
           search-paths: config-repo     # configs live in the config-repo/ folder of the repo
           default-label: main           # always serve the main branch
 server:
-  port: 8888
+  port: 8001
 ```
 
 How a request flows: the gateway asks `GET /api-gateway/default` → the server clones/refreshes the git repo → finds `config-repo/api-gateway.yaml` → returns it as JSON properties. This means **configuration changes are deployed by pushing to the repo's `main` branch** and the config server picks them up (clients refresh on boot or via actuator refresh).
@@ -66,11 +66,11 @@ How a request flows: the gateway asks `GET /api-gateway/default` → the server 
 
 | File | Serves |
 | --- | --- |
-| `eureka-server.yaml` | registry-port 8761, standalone flags, actuator exposure |
-| `api-gateway.yaml` | port 8080, all gateway routes, `jwt.secret` / `jwt.expiration-ms`, `user-service.url`, eureka client |
-| `parking-service.yaml` | port 8081, `spring.datasource.url: ${DB_URL}`, JPA dialect, eureka client |
-| `vehicle-service.yaml` | port 8082, datasource, `user-service.url`, eureka client enabled |
-| `payment-service.yaml` | port 8084, datasource, `user-service.url`, eureka client enabled |
+| `eureka-server.yaml` | registry-port 8000, standalone flags, actuator exposure |
+| `api-gateway.yaml` | port 8002, all gateway routes, `jwt.secret` / `jwt.expiration-ms`, `user-service.url`, eureka client |
+| `parking-service.yaml` | port 8003, `spring.datasource.url: ${DB_URL}`, JPA dialect, eureka client |
+| `vehicle-service.yaml` | port 8004, datasource, `user-service.url`, eureka client enabled |
+| `payment-service.yaml` | port 8006, datasource, `user-service.url`, eureka client enabled |
 | `user-service.yaml` | `PORT`, `MONGO_URI`, `PARKING_SERVICE_URL`, `VEHICLE_SERVICE_URL` (fetched by the Node service at boot) |
 
 Secrets (`DB_URL`, `MONGO_URI`, `JWT_SECRET`) are never written in the repo — the YAMLs placehold them as `${VAR}` and each service supplies the actual value from its local `.env` or environment.
@@ -79,16 +79,16 @@ Secrets (`DB_URL`, `MONGO_URI`, `JWT_SECRET`) are never written in the repo — 
 
 ```bash
 cd infastructure/config-server
-./mvnw spring-boot:run        # :8888
+./mvnw spring-boot:run        # :8001
 ```
 
 Verify it works (needs the config-repo pushed to the remote `main`):
 
 ```bash
-curl http://localhost:8888/parking-service/default
+curl http://localhost:8001/parking-service/default
 ```
 
-Docker: `docker build -t spms/config-server . && docker run -p 8888:8888 spms/config-server`.
+Docker: `docker build -t spms/config-server . && docker run -p 8001:8001 spms/config-server`.
 
 ### Local development without the remote repo
 

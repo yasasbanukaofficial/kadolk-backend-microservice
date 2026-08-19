@@ -6,12 +6,12 @@ Owns the **vehicles** of the system: registration, update, retrieval and the sim
 
 ```mermaid
 flowchart LR
-    Gateway[API Gateway :8080] --> Vehicle[vehicle-service :8082]
+    Gateway[API Gateway :8002] --> Vehicle[vehicle-service :8004]
     Vehicle --> DB[(PostgreSQL)]
-    Parking[parking-service :8081] -.validate vehicleId.-> Vehicle
-    User[user-service :8083] -.validate vehicleId.-> Vehicle
+    Parking[parking-service :8003] -.validate vehicleId.-> Vehicle
+    User[user-service :8005] -.validate vehicleId.-> Vehicle
     Vehicle -.validate userId.-> User
-    Vehicle -.register.-> Eureka[Eureka :8761]
+    Vehicle -.register.-> Eureka[Eureka :8000]
 ```
 
 - Receives its traffic via the gateway (`/api/vehicle/**` → `/vehicle/**`).
@@ -99,7 +99,7 @@ The `vehicleNumber` and user validations mean the vehicle table never holds dang
 
 ### The client (`client/UserServiceClient.java`)
 
-Unlike parking-service's client, this one uses a **plain `WebClient`** (`config/WebClientConfig.java` — no `@LoadBalanced`) because **user-service is a Node app that never registers with Eureka**. The base URL comes from `${user-service.url:http://localhost:8083}` (config-repo). It GETs `/user/{id}`:
+Unlike parking-service's client, this one uses a **plain `WebClient`** (`config/WebClientConfig.java` — no `@LoadBalanced`) because **user-service is a Node app that never registers with Eureka**. The base URL comes from `${user-service.url:http://localhost:8005}` (config-repo). It GETs `/user/{id}`:
 
 - `404` → `UserNotFoundException`
 - other error status → `ServiceUnavailableException`
@@ -138,10 +138,10 @@ All under `/vehicle`, wrapped in the `ApiResponse` envelope:
 From `config-repo/vehicle-service.yaml` (via the config server):
 
 ```yaml
-server.port: 8082
+server.port: 8004
 spring.datasource.url: ${DB_URL}        # secret, from local .env
 eureka.client.enabled: true
-user-service.url: http://localhost:8083 # used by UserServiceClient
+user-service.url: http://localhost:8005 # used by UserServiceClient
 ```
 
 Local `application.yaml` only names the app and imports the config server + local `.env`.
@@ -151,7 +151,7 @@ Local `application.yaml` only names the app and imports the config server + loca
 ```bash
 cd services/vehicle-service
 # create .env with: DB_URL=jdbc:postgresql://...
-./mvnw spring-boot:run        # :8082
+./mvnw spring-boot:run        # :8004
 ```
 
-Runtime dependencies: eureka (`:8761`), config server (`:8888`), and **user-service (`:8083`)** when registering vehicles with a `userId`. Docker: `docker build -t spms/vehicle-service . && docker run -p 8082:8082 spms/vehicle-service`.
+Runtime dependencies: eureka (`:8000`), config server (`:8001`), and **user-service (`:8005`)** when registering vehicles with a `userId`. Docker: `docker build -t spms/vehicle-service . && docker run -p 8004:8004 spms/vehicle-service`.
