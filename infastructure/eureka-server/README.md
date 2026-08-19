@@ -44,9 +44,6 @@ server.port: 8761
 
 eureka.client.register-with-eureka: false   # the registry must NOT register itself
 eureka.client.fetch-registry: false         # the registry already IS the registry
-
-management.endpoints.web.exposure.include: ['health', 'prometheus', 'info', 'metrics', 'env']
-management.endpoint.health.show-details: always
 ```
 
 Why the two `false` flags? A Eureka server has nothing to discover — it *is* the discovery service. Registering with itself or fetching its own registry would just add noise and a second instance of EUREKA-SERVER in the dashboard.

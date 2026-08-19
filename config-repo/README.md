@@ -22,7 +22,7 @@ flowchart LR
 
 | File | What it configures |
 | --- | --- |
-| `eureka-server.yaml` | registry: port `8761`, `register-with-eureka: false`, `fetch-registry: false`, actuator exposure |
+| `eureka-server.yaml` | registry: port `8761`, `register-with-eureka: false`, `fetch-registry: false` |
 | `api-gateway.yaml` | port `8080`, the 4 gateway routes (`lb://` for Java services, direct URL for user), `jwt.secret` + `jwt.expiration-ms`, `user-service.url`, eureka client |
 | `parking-service.yaml` | port `8081`, datasource `${DB_URL}`, JPA dialect, eureka client with default zone |
 | `vehicle-service.yaml` | port `8082`, datasource `${DB_URL}`, `user-service.url`, `eureka.client.enabled: true` |
