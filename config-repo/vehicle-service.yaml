@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: 8004
 
 spring:
   datasource:
@@ -17,11 +17,12 @@ eureka:
     enabled: true
 
 user-service:
-  url: http://localhost:8083
+  url: http://localhost:8005
 
 management:
   server:
-    port: 8082
+    port: 8004
+    address: 0.0.0.0
   endpoints:
     web:
       exposure:

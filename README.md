@@ -23,21 +23,21 @@ A cloud-native, microservice-based application for real-time management and moni
 
 ## Architecture
 
-Microservice architecture. Every request enters through the **API Gateway** (`:8080`), which authenticates the caller with a JWT and then load-balances the call to the owning service. Each service is independently deployable, owns its own database, and exposes a JSON REST API behind a consistent `ApiResponse` envelope. Spring Cloud Eureka (`:8761`) is the service registry & discovery, so services locate each other by name (e.g. `lb://parking-service`) instead of hard-coded addresses. All configuration is centralized in a Spring Cloud Config Server (`:8888`) that serves the YAML files from the `config-repo` folder.
+Microservice architecture. Every request enters through the **API Gateway** (`:8002`), which authenticates the caller with a JWT and then load-balances the call to the owning service. Each service is independently deployable, owns its own database, and exposes a JSON REST API behind a consistent `ApiResponse` envelope. Spring Cloud Eureka (`:8000`) is the service registry & discovery, so services locate each other by name (e.g. `lb://parking-service`) instead of hard-coded addresses. All configuration is centralized in a Spring Cloud Config Server (`:8001`) that serves the YAML files from the `config-repo` folder.
 
 ```mermaid
 flowchart LR
-    Client[Client / Frontend] -->|Bearer JWT| Gateway[API Gateway<br/>:8080]
+    Client[Client / Frontend] -->|Bearer JWT| Gateway[API Gateway<br/>:8002]
 
     subgraph Infrastructure
-        Config[Config Server<br/>:8888]
-        Eureka[Eureka Registry<br/>:8761]
+        Config[Config Server<br/>:8001]
+        Eureka[Eureka Registry<br/>:8000]
     end
 
-    Gateway -->|lb://parking-service| Parking[parking-service<br/>:8081]
-    Gateway -->|lb://vehicle-service| Vehicle[vehicle-service<br/>:8082]
-    Gateway -->|direct URL| User[user-service<br/>:8083]
-    Gateway -->|lb://payment-service| Payment[payment-service<br/>:8084]
+    Gateway -->|lb://parking-service| Parking[parking-service<br/>:8003]
+    Gateway -->|lb://vehicle-service| Vehicle[vehicle-service<br/>:8004]
+    Gateway -->|direct URL| User[user-service<br/>:8005]
+    Gateway -->|lb://payment-service| Payment[payment-service<br/>:8006]
 
     Parking --> PG1[(PostgreSQL<br/>parking)]
     Vehicle --> PG2[(PostgreSQL<br/>vehicle)]
@@ -102,11 +102,11 @@ sequenceDiagram
 
 | Service | Stack | Port | Description |
 | --- | --- | --- | --- |
-| `infastructure/api-gateway` | Spring Cloud Gateway (MVC) | 8080 | Single entry point. JWT login (`/api/auth/login`), validates JWTs on every other route, load-balances to services via Eureka. |
-| `services/parking-service` | Spring Boot + PostgreSQL | 8081 | Manages parking spaces: list, manage, reserve, release, update status, and filter by location/availability. |
-| `services/vehicle-service` | Spring Boot + PostgreSQL | 8082 | Handles vehicle operations: register, update, retrieve vehicle details, link vehicles to users, and simulate entry/exit tracking. |
-| `services/user-service` | Node.js (Express) + MongoDB | 8083 | Handles user operations: register/authenticate (JWT), view/update profiles, and access booking history/logs. |
-| `services/payment-service` | Spring Boot + PostgreSQL | 8084 | Handles payment operations: create payments, validate mock card data, simulate transaction flow/status, generate digital receipts, and process refunds. |
+| `infastructure/api-gateway` | Spring Cloud Gateway (MVC) | 8002 | Single entry point. JWT login (`/api/auth/login`), validates JWTs on every other route, load-balances to services via Eureka. |
+| `services/parking-service` | Spring Boot + PostgreSQL | 8003 | Manages parking spaces: list, manage, reserve, release, update status, and filter by location/availability. |
+| `services/vehicle-service` | Spring Boot + PostgreSQL | 8004 | Handles vehicle operations: register, update, retrieve vehicle details, link vehicles to users, and simulate entry/exit tracking. |
+| `services/user-service` | Node.js (Express) + MongoDB | 8005 | Handles user operations: register/authenticate (JWT), view/update profiles, and access booking history/logs. |
+| `services/payment-service` | Spring Boot + PostgreSQL | 8006 | Handles payment operations: create payments, validate mock card data, simulate transaction flow/status, generate digital receipts, and process refunds. |
 
 All responses use a consistent envelope:
 
@@ -258,8 +258,8 @@ Responsible for the mock payment flow. A payment references a `bookingId` and `u
 
 | Module | Port | Description |
 | --- | --- | --- |
-| `infastructure/eureka-server` | 8761 | Service registry. Every Java service (and the gateway) registers here; `lb://` routes and clients resolve instances through it. |
-| `infastructure/config-server` | 8888 | Serves configuration from the `config-repo` folder (git backend). Every service imports `optional:configserver:http://localhost:8888` and reads its `{service-name}.yaml` from here. |
+| `infastructure/eureka-server` | 8000 | Service registry. Every Java service (and the gateway) registers here; `lb://` routes and clients resolve instances through it. |
+| `infastructure/config-server` | 8001 | Serves configuration from the `config-repo` folder (git backend). Every service imports `optional:configserver:http://localhost:8001` and reads its `{service-name}.yaml` from here. |
 | `config-repo` | - | YAML files per service: ports, `spring.datasource.url` (`${DB_URL}` from each service's `.env`), Eureka settings, and (for the gateway) routes + JWT settings. |
 
 ## Service-to-Service Communication
@@ -299,29 +299,29 @@ DB_URL=jdbc:postgresql://localhost:5432/parking_db
 
 ```bash
 # 1. Infrastructure (each from its own directory)
-cd infastructure/eureka-server && ./mvnw spring-boot:run     # :8761
-cd infastructure/config-server && ./mvnw spring-boot:run     # :8888
-cd infastructure/api-gateway  && ./mvnw spring-boot:run      # :8080
+cd infastructure/eureka-server && ./mvnw spring-boot:run     # :8000
+cd infastructure/config-server && ./mvnw spring-boot:run     # :8001
+cd infastructure/api-gateway  && ./mvnw spring-boot:run      # :8002
 
 # 2. Services
-cd services/parking-service  && ./mvnw spring-boot:run       # :8081
-cd services/vehicle-service  && ./mvnw spring-boot:run       # :8082
-cd services/payment-service  && ./mvnw spring-boot:run       # :8084
+cd services/parking-service  && ./mvnw spring-boot:run       # :8003
+cd services/vehicle-service  && ./mvnw spring-boot:run       # :8004
+cd services/payment-service  && ./mvnw spring-boot:run       # :8006
 
 # 3. Node service
-cd services/user-service && npm install && npm run dev       # :8083
+cd services/user-service && npm install && npm run dev       # :8005
 ```
 
 ### Authentication flow (quick test)
 
 ```bash
 # 1. Get a token
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8002/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"secret"}'
 
 # 2. Call a protected route with the token
-curl http://localhost:8080/api/parking \
+curl http://localhost:8002/api/parking \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -330,17 +330,17 @@ curl http://localhost:8080/api/parking \
 ```
 ├── config-repo/                  # YAML configuration per service (served by config-server)
 ├── infastructure/
-│   ├── api-gateway/              # Spring Cloud Gateway (MVC), JWT auth, :8080
-│   ├── config-server/            # centralized configuration server, :8888
-│   └── eureka-server/            # service registry, :8761
+│   ├── api-gateway/              # Spring Cloud Gateway (MVC), JWT auth, :8002
+│   ├── config-server/            # centralized configuration server, :8001
+│   └── eureka-server/            # service registry, :8000
 ├── docs/                         # coursework PDF, screenshots
 ├── postman/
 │   └── services/                 # Postman collections per service
 └── services/
-    ├── parking-service/          # Spring Boot, PostgreSQL, :8081
-    ├── vehicle-service/          # Spring Boot, PostgreSQL, :8082
-    ├── user-service/             # Node.js/Express + MongoDB, :8083
-    └── payment-service/          # Spring Boot, PostgreSQL, :8084
+    ├── parking-service/          # Spring Boot, PostgreSQL, :8003
+    ├── vehicle-service/          # Spring Boot, PostgreSQL, :8004
+    ├── user-service/             # Node.js/Express + MongoDB, :8005
+    └── payment-service/          # Spring Boot, PostgreSQL, :8006
 ```
 
 ## Resources

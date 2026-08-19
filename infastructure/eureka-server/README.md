@@ -6,11 +6,11 @@ The **service registry** of the system (Netflix Eureka). Every Java service — 
 
 ```mermaid
 flowchart LR
-    Registry((Eureka :8761))
-    Parking[parking-service :8081] -->|register / heartbeat| Registry
-    Vehicle[vehicle-service :8082] -->|register / heartbeat| Registry
-    Payment[payment-service :8084] -->|register / heartbeat| Registry
-    Gateway[api-gateway :8080] -->|register / heartbeat| Registry
+    Registry((Eureka :8000))
+    Parking[parking-service :8003] -->|register / heartbeat| Registry
+    Vehicle[vehicle-service :8004] -->|register / heartbeat| Registry
+    Payment[payment-service :8006] -->|register / heartbeat| Registry
+    Gateway[api-gateway :8002] -->|register / heartbeat| Registry
     Registry -.resolve lb:// targets.-> Gateway
     Registry -.resolve http://<service-name>.-> Parking
     Registry -.resolve http://<service-name>.-> Payment
@@ -37,10 +37,10 @@ infastructure/eureka-server/
 
 ## Configuration
 
-The local `application.yaml` only names the app and imports `optional:configserver:http://localhost:8888` — the actual registry settings live in `config-repo/eureka-server.yaml`:
+The local `application.yaml` only names the app and imports `optional:configserver:http://localhost:8001` — the actual registry settings live in `config-repo/eureka-server.yaml`:
 
 ```yaml
-server.port: 8761
+server.port: 8000
 
 eureka.client.register-with-eureka: false   # the registry must NOT register itself
 eureka.client.fetch-registry: false         # the registry already IS the registry
@@ -52,7 +52,7 @@ Why the two `false` flags? A Eureka server has nothing to discover — it *is* t
 
 ```bash
 cd infastructure/eureka-server
-./mvnw spring-boot:run        # :8761
+./mvnw spring-boot:run        # :8000
 ```
 
-Open `http://localhost:8761` for the dashboard — you should see `PARKING-SERVICE`, `VEHICLE-SERVICE`, `PAYMENT-SERVICE` and `API-GATEWAY` registered once the whole stack is up. Docker: `docker build -t spms/eureka-server . && docker run -p 8761:8761 spms/eureka-server`.
+Open `http://localhost:8000` for the dashboard — you should see `PARKING-SERVICE`, `VEHICLE-SERVICE`, `PAYMENT-SERVICE` and `API-GATEWAY` registered once the whole stack is up. Docker: `docker build -t spms/eureka-server . && docker run -p 8000:8000 spms/eureka-server`.

@@ -1,4 +1,4 @@
-const CONFIG_SERVER_URL = process.env.CONFIG_SERVER_URL ?? 'http://localhost:8888';
+const CONFIG_SERVER_URL = process.env.CONFIG_SERVER_URL ?? 'http://localhost:8001';
 
 export async function loadRemoteConfig(): Promise<void> {
     try {

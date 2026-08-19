@@ -6,12 +6,12 @@ Owns the **parking spaces** of the system: who owns a spot, where it is, whether
 
 ```mermaid
 flowchart LR
-    Gateway[API Gateway :8080] --> Parking[parking-service :8081]
+    Gateway[API Gateway :8002] --> Parking[parking-service :8003]
     Parking --> DB[(PostgreSQL)]
-    Parking -.validate vehicleId.-> Vehicle[vehicle-service :8082]
-    Payment[payment-service :8084] -.validate bookingId.-> Parking
-    User[user-service :8083] -.validate parkingId.-> Parking
-    Parking -.register.-> Eureka[Eureka :8761]
+    Parking -.validate vehicleId.-> Vehicle[vehicle-service :8004]
+    Payment[payment-service :8006] -.validate bookingId.-> Parking
+    User[user-service :8005] -.validate parkingId.-> Parking
+    Parking -.register.-> Eureka[Eureka :8000]
 ```
 
 - Receives its traffic via the gateway (`/api/parking/**` → `/parking/**`).
@@ -143,22 +143,22 @@ All under `/parking`, wrapped in the `ApiResponse` envelope:
 Everything except the database URL comes from `config-repo/parking-service.yaml` (via the config server):
 
 ```yaml
-server.port: 8081
+server.port: 8003
 spring.datasource.url: ${DB_URL}        # secret, from local .env
-eureka.client.service-url.defaultZone: http://localhost:8761/eureka/
+eureka.client.service-url.defaultZone: http://localhost:8000/eureka/
 ```
 
-Local `application.yaml` only names the app and imports the config server (`optional:configserver:http://localhost:8888`) + the local `.env` (`optional:file:.env[.properties]`). Without `.env` the app boots but cannot connect to the database.
+Local `application.yaml` only names the app and imports the config server (`optional:configserver:http://localhost:8001`) + the local `.env` (`optional:file:.env[.properties]`). Without `.env` the app boots but cannot connect to the database.
 
 ## How to run
 
 ```bash
 cd services/parking-service
 # create .env with: DB_URL=jdbc:postgresql://...
-./mvnw spring-boot:run        # :8081
+./mvnw spring-boot:run        # :8003
 ```
 
-Dependencies at runtime: eureka (`:8761`), config server (`:8888`), and **vehicle-service (`:8082`)** for reservations. Docker: `docker build -t spms/parking-service . && docker run -p 8081:8081 spms/parking-service`.
+Dependencies at runtime: eureka (`:8000`), config server (`:8001`), and **vehicle-service (`:8004`)** for reservations. Docker: `docker build -t spms/parking-service . && docker run -p 8003:8003 spms/parking-service`.
 
 ## Postman
 

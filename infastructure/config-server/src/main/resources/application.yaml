@@ -15,11 +15,12 @@ spring:
           default-label: main
 
 server:
-  port: 8888
+  port: 8001
 
 management:
   server:
-    port: 8888
+    port: 8001
+    address: 0.0.0.0
   endpoints:
     web:
       exposure:
