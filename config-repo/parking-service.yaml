@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8003
 
 spring:
   datasource:
@@ -15,6 +15,15 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://localhost:8000/eureka/
     register-with-eureka: true
     fetch-registry: true
+
+management:
+  server:
+    port: 8003
+    address: 0.0.0.0
+  endpoints:
+    web:
+      exposure:
+        include: ['health', 'info', 'metrics', 'prometheus']

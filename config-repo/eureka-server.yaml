@@ -1,5 +1,5 @@
 server:
-  port: 8761
+  port: 8000
 
 eureka:
   client:
@@ -11,15 +11,3 @@ eureka:
     # No need to download its own registry
     # Only other services need to download the registry as those services need to know where other registry runs
     fetch-registry: false
-
-management:
-  server:
-    port: 8761
-  endpoints:
-    web:
-      exposure:
-        include: ['health', 'prometheus', 'info', 'metrics', 'env']
-
-  endpoint:
-    health:
-      show-details: always

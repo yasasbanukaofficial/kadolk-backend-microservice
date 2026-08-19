@@ -6,7 +6,7 @@ import { loadRemoteConfig } from './config/remoteConfig';
 async function start(): Promise<void> {
     await loadRemoteConfig();
 
-    const port = Number(process.env.PORT ?? 8083);
+    const port = Number(process.env.PORT ?? 8005);
 
     await connectDB();
     app.listen(port, () => {

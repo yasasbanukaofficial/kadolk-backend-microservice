@@ -6,11 +6,11 @@ Owns the **mock payment flow**: creating payments for a booking, validating (moc
 
 ```mermaid
 flowchart LR
-    Gateway[API Gateway :8080] --> Payment[payment-service :8084]
+    Gateway[API Gateway :8002] --> Payment[payment-service :8006]
     Payment --> DB[(PostgreSQL)]
-    Payment -.validate bookingId.-> Parking[parking-service :8081]
-    Payment -.validate userId.-> User[user-service :8083]
-    Payment -.register.-> Eureka[Eureka :8761]
+    Payment -.validate bookingId.-> Parking[parking-service :8003]
+    Payment -.validate userId.-> User[user-service :8005]
+    Payment -.register.-> Eureka[Eureka :8000]
 ```
 
 - Receives its traffic via the gateway (`/api/payment/**` → `/payment/**`).
@@ -108,7 +108,7 @@ Supporting bits worth knowing: `isLuhnValid` walks the digits right-to-left doub
 ### The clients (`client/`)
 
 - `ParkingServiceClient` — the `@LoadBalanced` one: `http://parking-service/parking/{id}` resolves through Eureka. `404 → BookingNotFoundException`, other errors / connection failures → `ServiceUnavailableException`.
-- `UserServiceClient` — plain `WebClient` + `${user-service.url:http://localhost:8083}` direct URL (Node service is not in Eureka). `404 → UserNotFoundException`, else → `ServiceUnavailableException`.
+- `UserServiceClient` — plain `WebClient` + `${user-service.url:http://localhost:8005}` direct URL (Node service is not in Eureka). `404 → UserNotFoundException`, else → `ServiceUnavailableException`.
 
 ### Error responses (`exceptions/`)
 
@@ -147,10 +147,10 @@ All under `/payment`, wrapped in the `ApiResponse` envelope:
 From `config-repo/payment-service.yaml` (via the config server):
 
 ```yaml
-server.port: 8084
+server.port: 8006
 spring.datasource.url: ${DB_URL}        # secret, from local .env
 eureka.client.enabled: true
-user-service.url: http://localhost:8083 # used by UserServiceClient
+user-service.url: http://localhost:8005 # used by UserServiceClient
 ```
 
 Local `application.yaml` only names the app and imports the config server + local `.env`.
@@ -160,7 +160,7 @@ Local `application.yaml` only names the app and imports the config server + loca
 ```bash
 cd services/payment-service
 # create .env with: DB_URL=jdbc:postgresql://...
-./mvnw spring-boot:run        # :8084
+./mvnw spring-boot:run        # :8006
 ```
 
-Runtime dependencies: eureka (`:8761`), config server (`:8888`), **parking-service (`:8081`)** and **user-service (`:8083`)** for the create validations. Docker: `docker build -t spms/payment-service . && docker run -p 8084:8084 spms/payment-service`.
+Runtime dependencies: eureka (`:8000`), config server (`:8001`), **parking-service (`:8003`)** and **user-service (`:8005`)** for the create validations. Docker: `docker build -t spms/payment-service . && docker run -p 8006:8006 spms/payment-service`.

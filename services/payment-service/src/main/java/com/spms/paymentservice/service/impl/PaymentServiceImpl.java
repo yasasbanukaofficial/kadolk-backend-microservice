@@ -63,7 +63,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDetailRes save(PaymentSaveReq req) {
-        parkingServiceClient.validateBookingExists(req.getBookingId());
+        parkingServiceClient.validateParkingExists(req.getBookingId());
         userServiceClient.validateUserExists(req.getUserId());
         validateMockCard(req);
         Payment payment = new Payment();

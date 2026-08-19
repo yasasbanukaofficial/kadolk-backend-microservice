@@ -6,11 +6,11 @@ The **single entry point** of the Smart Parking Management System. It authentica
 
 ```mermaid
 flowchart LR
-    Client[Client] -->|Bearer JWT| Gateway[API Gateway :8080]
-    Gateway -->|lb:// via Eureka| Parking[parking-service :8081]
-    Gateway -->|lb:// via Eureka| Vehicle[vehicle-service :8082]
-    Gateway -->|direct URL| User[user-service :8083]
-    Gateway -->|lb:// via Eureka| Payment[payment-service :8084]
+    Client[Client] -->|Bearer JWT| Gateway[API Gateway :8002]
+    Gateway -->|lb:// via Eureka| Parking[parking-service :8003]
+    Gateway -->|lb:// via Eureka| Vehicle[vehicle-service :8004]
+    Gateway -->|direct URL| User[user-service :8005]
+    Gateway -->|lb:// via Eureka| Payment[payment-service :8006]
 ```
 
 Every request in the whole system passes through this service. It is built with **Spring Cloud Gateway (MVC variant)** — the servlet-based flavour of Spring Cloud Gateway — so it uses classic Spring MVC + Spring Security code (no reactive code), which keeps it consistent with the rest of the Java services in the repo.
@@ -64,7 +64,7 @@ infastructure/api-gateway/
 
 ### Class-by-class explanation
 
-**`ApiGatewayApplication`** — the boot class. `@SpringBootApplication` + `@EnableDiscoveryClient`, the same pair every Java service uses so the gateway registers itself with Eureka on `:8761`.
+**`ApiGatewayApplication`** — the boot class. `@SpringBootApplication` + `@EnableDiscoveryClient`, the same pair every Java service uses so the gateway registers itself with Eureka on `:8000`.
 
 **`security/JwtService`** — the JWT engine (jjwt 0.12):
 
@@ -88,7 +88,7 @@ infastructure/api-gateway/
 
 **`client/UserServiceClient`** — how the gateway verifies credentials:
 
-- POSTs `{ email, password }` to `${user-service.url}/user/login` (default `http://localhost:8083`).
+- POSTs `{ email, password }` to `${user-service.url}/user/login` (default `http://localhost:8005`).
 - `401` from user-service → `InvalidCredentialsException` ("Invalid email or password").
 - Any other error status → `ServiceUnavailableException`.
 - A connection failure (user-service down) → `ServiceUnavailableException` ("User service is currently unavailable").
@@ -110,7 +110,7 @@ Routes are defined in `config-repo/api-gateway.yaml` (served by the config serve
 | `parking-service` | `Path=/api/parking/**` | `lb://parking-service` | `StripPrefix=1` |
 | `vehicle-service` | `Path=/api/vehicle/**` | `lb://vehicle-service` | `StripPrefix=1` |
 | `payment-service` | `Path=/api/payment/**` | `lb://payment-service` | `StripPrefix=1` |
-| `user-service` | `Path=/api/user/**` | `${user-service.url:http://localhost:8083}` | `StripPrefix=1` |
+| `user-service` | `Path=/api/user/**` | `${user-service.url:http://localhost:8005}` | `StripPrefix=1` |
 
 - **`lb://` URIs + LoadBalancer** = the load balancing bit. Spring Cloud LoadBalancer asks Eureka for the instances of e.g. `parking-service` and picks one. If you scale parking-service to 3 instances, the gateway balances across them automatically (round-robin).
 - **`StripPrefix=1`** removes the first path segment, so `/api/parking/5` is forwarded as `/parking/5` to the downstream service.
@@ -122,15 +122,15 @@ Everything configurable lives in `config-repo/api-gateway.yaml`:
 
 | Key | Purpose |
 | --- | --- |
-| `server.port` | 8080 |
+| `server.port` | 8002 |
 | `spring.cloud.gateway.routes` | the route table above |
 | `jwt.secret` | HMAC key for signing/validation, overridable via `.env` `JWT_SECRET` |
 | `jwt.expiration-ms` | token lifetime (86400000 = 24h) |
 | `user-service.url` | where to reach the Node service |
-| `eureka.client.*` | registration with Eureka on `:8761` |
+| `eureka.client.*` | registration with Eureka on `:8000` |
 | `management.endpoints.web.exposure.include` | actuator health/metrics/prometheus for monitoring |
 
-Local `application.yaml` only sets the app name and imports `optional:configserver:http://localhost:8888` — if no config server is running the gateway still boots with defaults.
+Local `application.yaml` only sets the app name and imports `optional:configserver:http://localhost:8001` — if no config server is running the gateway still boots with defaults.
 
 ## How to run
 
@@ -139,28 +139,28 @@ cd infastructure/api-gateway
 ./mvnw spring-boot:run
 ```
 
-Requires (in order of dependency): config server (`:8888`) → eureka (`:8761`) → gateway → services. Without Eureka the `lb://` routes have nowhere to resolve — the gateway still starts, but proxied calls fall over.
+Requires (in order of dependency): config server (`:8001`) → eureka (`:8000`) → gateway → services. Without Eureka the `lb://` routes have nowhere to resolve — the gateway still starts, but proxied calls fall over.
 
 Test the auth flow:
 
 ```bash
 # login (public)
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8002/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"secret"}'
 
 # protected call (401 without a token)
-curl http://localhost:8080/api/parking
+curl http://localhost:8002/api/parking
 
 # protected call (200 with a token)
-curl http://localhost:8080/api/parking -H "Authorization: Bearer <token>"
+curl http://localhost:8002/api/parking -H "Authorization: Bearer <token>"
 ```
 
 ## Docker
 
 ```bash
 docker build -t spms/api-gateway .
-docker run -p 8080:8080 spms/api-gateway
+docker run -p 8002:8002 spms/api-gateway
 ```
 
 Multi-stage build (`maven:latest` → `eclipse-temurin:latest`), identical pattern to every other Java service. The `.env` is excluded from the image, so supply `JWT_SECRET` etc. via environment variables at runtime.

@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8002
 
 spring:
   cloud:
@@ -29,7 +29,7 @@ spring:
 
         # user-service (Node) is not registered with Eureka, so it is reached by direct URL
         - id: user-service
-          uri: ${user-service.url:http://localhost:8083}
+          uri: ${user-service.url:http://localhost:8005}
           predicates:
             - Path=/api/user/**
           filters:
@@ -40,16 +40,19 @@ jwt:
   expiration-ms: 86400000
 
 user-service:
-  url: http://localhost:8083
+  url: http://localhost:8005
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://localhost:8000/eureka/
     register-with-eureka: true
     fetch-registry: true
 
 management:
+  server:
+    port: 8002
+    address: 0.0.0.0
   endpoints:
     web:
       exposure:

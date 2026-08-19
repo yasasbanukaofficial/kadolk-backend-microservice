@@ -14,7 +14,7 @@ public class UserServiceClient {
 
     private final WebClient webClient;
 
-    @Value("${user-service.url:http://localhost:8083}")
+    @Value("${user-service.url:http://localhost:8005}")
     private String userServiceBaseUrl;
 
     public void validateUserExists(Long userId) {
