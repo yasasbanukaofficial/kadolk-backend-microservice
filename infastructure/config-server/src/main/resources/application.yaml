@@ -3,7 +3,7 @@ spring:
     name: config-server
 
   profiles:
-    # Reads yaml files from a git repository (config-repo folder) 
+    # Reads yaml files from a git repository (config-repo folder)
     active: git
 
   cloud:
@@ -16,3 +16,15 @@ spring:
 
 server:
   port: 8888
+
+management:
+  server:
+    port: 8888
+  endpoints:
+    web:
+      exposure:
+        include: ['prometheus', 'metrics', 'health', 'info']
+
+  endpoint:
+    health:
+      show-details: always

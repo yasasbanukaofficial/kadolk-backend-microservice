@@ -18,3 +18,11 @@ eureka:
 
 user-service:
   url: http://localhost:8083
+
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      exposure:
+        include: ['health', 'info', 'metrics', 'prometheus']
